@@ -16,7 +16,8 @@ namespace SchedulesDirectDownloader
 
 
             var downloader = new IconDownloader();
-            downloader.DoWork();
+            downloader.DoWork().Wait();
+            Console.ReadKey();
         }
     }
 }

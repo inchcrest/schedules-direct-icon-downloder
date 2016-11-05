@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace SchedulesDirect.IconDownloader.Helpers
 {
@@ -36,9 +37,22 @@ namespace SchedulesDirect.IconDownloader.Helpers
             }
             // add a new line because user pressed enter at the end of their password
             Console.WriteLine();
-            var sha1Password = SHA1.Create(password);
 
-            return sha1Password.ToString();
+            using (var sha1 = new SHA1Managed())
+            {
+                var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(password));
+                var sb = new StringBuilder(hash.Length * 2);
+
+                foreach(var b in hash)
+                {
+                    sb.Append(b.ToString("x2"));
+                }
+
+                return sb.ToString();
+            }
+            //    var sha1Password = SHA1.Create(password);
+
+            //return sha1Password.ToString();
         }
     }
 }
