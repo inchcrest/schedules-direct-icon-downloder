@@ -18,14 +18,30 @@ namespace SchedulesDirect.IconDownloader
     {
         public IconDownloader()
         {
+            throw new NotImplementedException();          
+        }
+
+        public IconDownloader(string path, string folder, string username, bool logging)
+        {
             Credentials = new Credentials();
             Token = new Token();
-            // Setup HTTP objs here
+
+            if (String.IsNullOrEmpty(path))
+            {
+                this.Path = AppDomain.CurrentDomain.BaseDirectory;
+            }
+            else if (!Uri.IsWellFormedUriString(path, UriKind.Absolute))
+            {
+                throw new ArgumentException("Path is invalid");
+            }
+            this.Folder = folder;
+            this.Credentials.Username = username;
+            this.Logging = logging;
         }
-        
+
         public async Task DoWork()
         {
-            GetUserNamePassword();
+            PromptUserNamePassword();
             GetToken().Wait();
             UserLineups userLineups = await GetUserLineups();
             var lineup = PromptChooseLineup(userLineups);
@@ -38,21 +54,13 @@ namespace SchedulesDirect.IconDownloader
         }
 
         #region HTTP Requests
-        private void GetUserNamePassword()
-        {
-            Console.Write("Enter your user name: ");
-            Credentials.UserName = Console.ReadLine();
-            Console.Write("Enter your password: ");
-            Credentials.Password = ConsolePassword.ReadPassword();
-        }
-
         private async Task GetToken()
         {
             using (var client = new HttpClient().SchedulesDirectPostTokenRequest())
             {
                 var postParams = new Dictionary<string, string>
                 {
-                    { PostParameters.Username, Credentials.UserName },
+                    { PostParameters.Username, Credentials.Username },
                     { PostParameters.Password, Credentials.Password }
                 };
 
@@ -109,6 +117,18 @@ namespace SchedulesDirect.IconDownloader
         #endregion
 
         #region Prompts
+        private void PromptUserNamePassword()
+        {
+            if(String.IsNullOrEmpty(Credentials.Username))
+            {
+                Console.Write("Enter your SchedulesDirect username: ");
+                Credentials.Username = Console.ReadLine();
+            }
+            
+            Console.Write("Enter your SchedulesDirect password: ");
+            Credentials.Password = ConsolePassword.ReadPassword();
+        }
+
         private Lineup PromptChooseLineup(UserLineups userLineups)
         {
             int count = 0;
@@ -163,6 +183,9 @@ namespace SchedulesDirect.IconDownloader
         #region Private Fields
         private Credentials Credentials;
         private Token Token;
+        private string Folder;
+        private string Path;
+        private bool Logging;
         #endregion
     }
 }

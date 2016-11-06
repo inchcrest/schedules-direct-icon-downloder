@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CommandLine;
+using CommandLine.Text;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,12 +14,31 @@ namespace SchedulesDirectDownloader
     {
         static void Main(string[] args)
         {
-            // parse command args here
+            var options = new Options();
+            if (CommandLine.Parser.Default.ParseArguments(args, options))
+            {
+                try
+                {
+                    var downloader = new IconDownloader(options.Path, options.Folder, options.Username, options.Logging);
+                    downloader.DoWork().Wait();
+                    Console.ReadKey();
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine("Exiting...");
+                    
+                }
+                
+            }
+            else
+            {
+                // Display the default usage information
+                Console.WriteLine(options.GetUsage());
+            }
 
 
-            var downloader = new IconDownloader();
-            downloader.DoWork().Wait();
-            Console.ReadKey();
+            
         }
     }
 }

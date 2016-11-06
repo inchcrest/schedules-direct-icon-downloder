@@ -50,9 +50,6 @@ namespace SchedulesDirect.IconDownloader.Helpers
 
                 return sb.ToString();
             }
-            //    var sha1Password = SHA1.Create(password);
-
-            //return sha1Password.ToString();
         }
     }
 }
