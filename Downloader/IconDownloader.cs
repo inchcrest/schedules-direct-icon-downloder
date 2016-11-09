@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace SchedulesDirect.IconDownloader
@@ -10,9 +8,8 @@ namespace SchedulesDirect.IconDownloader
     using Newtonsoft.Json;
     using SchedulesDirect.IconDownloader.Constants;
     using SchedulesDirect.IconDownloader.Helpers;
-    using SchedulesDirect.IconDownloader.Models;
     using SchedulesDirect.IconDownloader.Models.JSON;
-    using System.Net.Http.Headers;
+    using System.IO;
 
     public class IconDownloader
     {
@@ -24,17 +21,34 @@ namespace SchedulesDirect.IconDownloader
         public IconDownloader(string path, string folder, string username, bool logging)
         {
             Credentials = new Credentials();
-            Token = new Token();
+            Token = new Token();            
+
+            if (String.IsNullOrEmpty(folder))
+            {
+                this.Folder = this.DefaultFolder;
+            }
+
+            else
+            {
+                this.Folder = folder;
+            }
 
             if (String.IsNullOrEmpty(path))
             {
-                this.Path = AppDomain.CurrentDomain.BaseDirectory;
-            }
-            else if (!Uri.IsWellFormedUriString(path, UriKind.Absolute))
+                this.Path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, this.Folder);
+            }                        
+            else
             {
-                throw new ArgumentException("Path is invalid");
+                if (!Uri.IsWellFormedUriString(path, UriKind.Absolute))
+                {
+                    throw new ArgumentException("Path is invalid");
+                }
+
+                this.Path = System.IO.Path.Combine(path, this.Folder);
             }
-            this.Folder = folder;
+
+            CreateFolder();
+
             this.Credentials.Username = username;
             this.Logging = logging;
         }
@@ -45,12 +59,12 @@ namespace SchedulesDirect.IconDownloader
             GetToken().Wait();
             UserLineups userLineups = await GetUserLineups();
             var lineup = PromptChooseLineup(userLineups);
-            if(lineup.lineup == null)
+            if (lineup.lineup == null)
             {
                 throw new ArgumentNullException("Lineup was null!");
             }
             var channelMappingLineup = await GetChannelMappingLineup(lineup);
-            DownloadIcons(channelMappingLineup);
+            DownloadIcons(channelMappingLineup).Wait();
         }
 
         #region HTTP Requests
@@ -110,9 +124,36 @@ namespace SchedulesDirect.IconDownloader
             }
         }
         
-        private void DownloadIcons(ChannelMappingLineup channelMappingLineup)
+        private async Task DownloadIcons(ChannelMappingLineup channelMappingLineup)
         {
-            throw new NotImplementedException();
+            foreach(var station in channelMappingLineup.stations)
+            {
+                if (station.logo == null)
+                    continue;
+
+                if (station.logo.URL == null)
+                    continue;
+
+                Uri uri = new Uri(station.logo.URL);
+                string fileName = String.Format("{0}.png", station.callsign);
+                string fullPath = System.IO.Path.Combine(this.Path, fileName);
+
+                if (File.Exists(fullPath))
+                    continue;
+
+                using (var client = new HttpClient())
+                {
+                    var byteArray = await client.GetByteArrayAsync(uri);
+                    File.WriteAllBytes(fullPath, byteArray);
+                }
+            }
+        }
+        #endregion
+
+        #region Folder
+        public void CreateFolder()
+        {
+            Directory.CreateDirectory(Path);
         }
         #endregion
 
@@ -183,6 +224,7 @@ namespace SchedulesDirect.IconDownloader
         #region Private Fields
         private Credentials Credentials;
         private Token Token;
+        private readonly string DefaultFolder = "channel-icons";
         private string Folder;
         private string Path;
         private bool Logging;

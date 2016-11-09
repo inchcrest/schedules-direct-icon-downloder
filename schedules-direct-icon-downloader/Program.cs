@@ -21,6 +21,7 @@ namespace SchedulesDirectDownloader
                 {
                     var downloader = new IconDownloader(options.Path, options.Folder, options.Username, options.Logging);
                     downloader.DoWork().Wait();
+                    Console.WriteLine("Done...Exiting");
                     Console.ReadKey();
                 }
                 catch(Exception e)
