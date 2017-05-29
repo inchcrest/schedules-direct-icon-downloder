@@ -27,8 +27,7 @@ namespace SchedulesDirectDownloader
                 catch(Exception e)
                 {
                     Console.WriteLine(e.Message);
-                    Console.WriteLine("Exiting...");
-                    
+                    Console.WriteLine("Exiting...");                    
                 }
                 
             }
@@ -36,10 +35,7 @@ namespace SchedulesDirectDownloader
             {
                 // Display the default usage information
                 Console.WriteLine(options.GetUsage());
-            }
-
-
-            
+            }            
         }
     }
 }
